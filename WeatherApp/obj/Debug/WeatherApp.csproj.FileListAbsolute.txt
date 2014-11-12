@@ -1,0 +1,15 @@
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\bin\Debug\WeatherApp.exe.config
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\bin\Debug\WeatherApp.exe
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\bin\Debug\WeatherApp.pdb
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\bin\Debug\RestSharp.dll
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\bin\Debug\RestSharp.xml
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\obj\Debug\WeatherApp.csprojResolveAssemblyReference.cache
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\obj\Debug\WeatherApp.Form1.resources
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\obj\Debug\WeatherApp.Properties.Resources.resources
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\obj\Debug\WeatherApp.csproj.GenerateResource.Cache
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\obj\Debug\WeatherApp.exe
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\obj\Debug\WeatherApp.pdb
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\bin\Debug\WeatherApp.exe.manifest
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\bin\Debug\WeatherApp.application
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\obj\Debug\WeatherApp.exe.manifest
+C:\hobby\WeatherApp\WeatherApp\WeatherApp\obj\Debug\WeatherApp.application
