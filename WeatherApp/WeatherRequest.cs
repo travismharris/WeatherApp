@@ -14,6 +14,7 @@ namespace WeatherApp
         string days, zip, latitude, longitude;
         RestClient coordinates;
         RestClient forecast;
+        XElement toParse;
 
         public WeatherRequest() : this("3", "22901") { }
 
@@ -64,7 +65,8 @@ namespace WeatherApp
         {
             var forecastRequest = new RestRequest("?" + latitude + "&" + longitude + "&format=12+hourly&numDays="+ days);
             var forecastResponse = forecast.Execute(forecastRequest);
-            List<WeatherObject> wOResponse = ParseXml(forecastResponse.Content.ToString());
+            toParse = XElement.Parse(forecastResponse.Content.ToString());
+            List<WeatherObject> wOResponse = ParseXml(toParse);
             return FormatResponse(wOResponse);
         }
 
@@ -72,7 +74,8 @@ namespace WeatherApp
         {
             var forecastRequest = new RestRequest("?" + latitude + "&" + longitude + "&format=12+hourly&numDays=" + days);
             var forecastResponse = forecast.Execute(forecastRequest);
-            List<WeatherObject> wOResponse = ParseXml12Hour(forecastResponse.Content.ToString());
+            toParse = XElement.Parse(forecastResponse.Content.ToString());
+            List<WeatherObject> wOResponse = ParseXml12Hour(toParse);
             return Format12HourResponse(wOResponse);
         }
 
@@ -108,28 +111,15 @@ namespace WeatherApp
             return sb.ToString();
         }
 
-        public List<WeatherObject> ParseXml(string rawXml)
+        public List<WeatherObject> ParseXml(XElement toParse)
         {
-            XElement toParse = XElement.Parse(rawXml);
+            var dateElements = GetDatesforDay24HourLayout(toParse);
+            var dates = GetPeriods(dateElements);
 
-            var dateElements = toParse.Descendants("time-layout")
-              .FirstOrDefault(x => x.Element("layout-key").Value == "k-p24h-n" + days +"-1");
-
-            var dates = from x in dateElements.Elements("start-valid-time")
-                              select x.Value;
-
-            var descriptions = from x in toParse.Descendants("weather").Elements("weather-conditions").Attributes()
-                               select x.Value.ToString();
-
-            var minimums = from x in toParse.Descendants("temperature").Elements("value")
-                           where x.Parent.Attribute("type").Value == "minimum"
-                           select x.Value.ToString();
-
-            var maximums = from x in toParse.Descendants("temperature").Elements("value")
-                           where x.Parent.Attribute("type").Value == "maximum"
-                           select x.Value.ToString();
-
-            var icons = toParse.Descendants("icon-link").Nodes();
+            var descriptions = GetDescriptions(toParse);
+            var minimums = GetMinimums(toParse);
+            var maximums = GetMaximums(toParse);
+            var icons = GetIcons(toParse);
 
             WeatherObject[] wo = new WeatherObject[minimums.Count()];
             for (int i = 0; i < minimums.Count(); i++)
@@ -143,6 +133,8 @@ namespace WeatherApp
 
         }
 
+
+
         public XElement GetDatesforDay24HourLayout(XElement toParse)
         {
             return toParse.Descendants("time-layout")
@@ -155,83 +147,97 @@ namespace WeatherApp
                 .FirstOrDefault(x => x.Element("layout-key").Value == "k-p24h-n" + days + "-2");
         }
 
-        public IEnumerable<XAttribute> GetPeriodName(XElement dateLayout)
+        public XElement Get12HourPeriodsLayout(XElement toParse)
+        {
+            return toParse.Descendants("time-layout")
+                .FirstOrDefault(x => x.Element("layout-key").Value.StartsWith("k-p12h-n"));
+        }
+
+        public IEnumerable<string> GetPeriods(XElement toParse)
+        {
+            return from x in toParse.Elements("start-valid-time")
+                   select x.Value;
+        }
+
+        public IEnumerable<XAttribute> GetPeriodNames(XElement dateLayout)
         {
             return from x in dateLayout.Elements("start-valid-time")
                    select x.Attribute("period-name");
         }
 
-        public List<WeatherObject> ParseXml12Hour(string rawXml)
+        public string GetStringValueOfDateTime(XElement dateLayout)
         {
-            //break out all the calls in this method
-            XElement toParse = XElement.Parse(rawXml);
-
-            var dateLayout24_1 = GetDatesforDay24HourLayout(toParse);
-
-            var dates24_1 = GetPeriodName(dateLayout24_1);
-
-            //var dateLayout24_1 = toParse.Descendants("time-layout")
-            //    .FirstOrDefault(x => x.Element("layout-key").Value == "k-p24h-n" + days + "-1");
-
-            //var dates24_1 = from x in dateLayout24_1.Elements("start-valid-time")
-            //                select x.Attribute("period-name");
-
-            //can reuse all calls for daytime parsing with nighttime calls!
-
-            var dayTime = dateLayout24_1.Elements("start-valid-time")
+            return dateLayout.Elements("start-valid-time")
                 .FirstOrDefault().Value;
-            
-            //var dateLayout24_2 = toParse.Descendants("time-layout")
-            //    .FirstOrDefault(x => x.Element("layout-key").Value == "k-p24h-n" + days + "-2");
+        }
 
-            var dateLayout24_2 = GetDatesforNight24HourLayout(toParse);
+        public IEnumerable<string> GetMinimums (XElement toParse)
+        {
+            return from x in toParse.Descendants("temperature").Elements("value")
+                   where x.Parent.Attribute("type").Value == "minimum"
+                   select x.Value.ToString();
+        }
 
-            var dates24_2 = GetPeriodName(dateLayout24_2);
+        public IEnumerable<string> GetMaximums(XElement toParse)
+        {
+            return from x in toParse.Descendants("temperature").Elements("value")
+                   where x.Parent.Attribute("type").Value == "maximum"
+                   select x.Value.ToString();
+        }
 
-            //var dates24_2  = from x in dateLayout24_2.Elements("start-valid-time")
-            //                 select x.Attribute("period-name");
+        public IEnumerable<string> GetDescriptions(XElement toParse)
+        {
+            return from x in toParse.Descendants("weather").Elements("weather-conditions").Attributes()
+                   select x.Value.ToString();
+        }
 
-            var nightTime = dateLayout24_2.Elements("start-valid-time")
-                .FirstOrDefault().Value;
+        public IEnumerable<string> GetIcons (XElement toParse)
+        {
+            return from x in toParse.Descendants("conditions-icon").Elements("icon-link")
+                   select x.Value;
+        }
+
+
+
+        public List<WeatherObject> ParseXml12Hour(XElement toParse)
+        {
+            var dateLayout24_Day = GetDatesforDay24HourLayout(toParse);
+            var dayNames = GetPeriodNames(dateLayout24_Day);
+            var dayTime = GetStringValueOfDateTime(dateLayout24_Day);
+
+            var dateLayout24_Night = GetDatesforNight24HourLayout(toParse);
+            var nightNames = GetPeriodNames(dateLayout24_Night);
+            var nightTime = GetStringValueOfDateTime(dateLayout24_Night);
 
             bool dayFirst = DayFirst(dayTime, nightTime);
 
-            var dateLayout12 = toParse.Descendants("time-layout")
-                               .FirstOrDefault(x => x.Element("layout-key").Value.StartsWith("k-p12h-n"));
+            var dateLayout12 = Get12HourPeriodsLayout(toParse);
+            var periods_12Hour = GetPeriods(dateLayout12);
 
-            var dates12 = from x in dateLayout12.Elements("start-valid-time")
-                          select x.Value;
+            var descriptions = GetDescriptions(toParse);
+            var minimums = GetMinimums(toParse);
+            var maximums = GetMaximums(toParse);
+            var icons = GetIcons(toParse);
 
-            var descriptions = from x in toParse.Descendants("weather").Elements("weather-conditions").Attributes()
-                          select x.Value.ToString();
+            //if day first call assembler one way else -- another
+            // or maybe a linq statement?
 
-            var minimums = from x in toParse.Descendants("temperature").Elements("value")
-                           where x.Parent.Attribute("type").Value == "minimum"
-                           select x.Value.ToString();
-
-            var maximums = from x in toParse.Descendants("temperature").Elements("value")
-                           where x.Parent.Attribute("type").Value == "maximum"
-                           select x.Value.ToString();
-
-            var icons = from x in toParse.Descendants("conditions-icon").Elements("icon-link")
-                        select x.Value;
-
-            WeatherObject[] wo = new WeatherObject[icons.Count()];
+            List<WeatherObject> wo = new List<WeatherObject>();
             if (dayFirst)
             {                    
-                for (int i = 0; i < dates12.Count(); i++)
+                for (int i = 0; i < periods_12Hour.Count(); i++)
                 {
                     WeatherObject tempWO = new WeatherObject();
                     if (i % 2 == 0)
                     {
                         if (i == 0)
                         {
-                            tempWO.date=dates24_1.ElementAt(i).ToString();
+                            tempWO.date=dayNames.ElementAt(i).ToString();
                             tempWO.max= maximums.ElementAt(i);
                         }
                         if (i > 0)
                         {
-                            tempWO.date=dates24_1.ElementAt(i - (i / 2)).ToString();
+                            tempWO.date=dayNames.ElementAt(i - (i / 2)).ToString();
                             tempWO.max= maximums.ElementAt(i - (i / 2));
                         }
                     }
@@ -239,36 +245,35 @@ namespace WeatherApp
                     {
                         if (i == 1)
                         {
-                            tempWO.date=dates24_2.ElementAt(i - 1).ToString();
+                            tempWO.date=nightNames.ElementAt(i - 1).ToString();
                             tempWO.min= minimums.ElementAt(i - 1);
                         }
                         if (i > 1)
                         {
-                            tempWO.date=dates24_2.ElementAt(i - ((i / 2) + 1)).ToString();
+                            tempWO.date=nightNames.ElementAt(i - ((i / 2) + 1)).ToString();
                             tempWO.min= minimums.ElementAt(i - ((i / 2) + 1));
                         }
                     }
-                    //sb.Append(dates12.ElementAt(i) + "\n");
                     tempWO.conditions=descriptions.ElementAt(i);
                     tempWO.iconPath=icons.ElementAt(i).ToString();
-                    wo[i] = tempWO;
+                    wo.Add(tempWO);
                 }
             }
             else
             {
-                for (int i = 0; i < dates12.Count(); i++)
+                for (int i = 0; i < periods_12Hour.Count(); i++)
                 {
                     WeatherObject tempWO = new WeatherObject();
                     if(i%2==0)
                     {
                         if (i == 0)
                         {
-                            tempWO.date=dates24_2.ElementAt(i).ToString();
+                            tempWO.date=nightNames.ElementAt(i).ToString();
                             tempWO.min= minimums.ElementAt(i);
                         }
                         if (i > 0)
                         {
-                            tempWO.date=dates24_2.ElementAt(i - (i / 2) ).ToString();
+                            tempWO.date=nightNames.ElementAt(i - (i / 2) ).ToString();
                             tempWO.min= minimums.ElementAt(i - (i / 2) );
                         }
                     }
@@ -276,45 +281,36 @@ namespace WeatherApp
                     {
                         if (i == 1)
                         {
-                            tempWO.date=dates24_1.ElementAt(i-1).ToString();
+                            tempWO.date=dayNames.ElementAt(i-1).ToString();
                             tempWO.max = maximums.ElementAt(i - 1);
                         }
                         if (i > 1)
                         {
-                            tempWO.date=dates24_1.ElementAt(i - ((i / 2)+1)).ToString();
+                            tempWO.date=dayNames.ElementAt(i - ((i / 2)+1)).ToString();
                             tempWO.max= maximums.ElementAt(i - ((i / 2)+1));
                         }
                     }
-                    //sb.Append(dates12.ElementAt(i) + "\n");
                     tempWO.conditions=descriptions.ElementAt(i);
                     tempWO.iconPath=icons.ElementAt(i).ToString();
-                    wo[i] = tempWO;
+                    wo.Add(tempWO);
                 }
             }
-            return wo.ToList();
+            return wo;
         }
 
         public string GetFormattedDate(string date)
-        {   
-            int year = Int32.Parse(date.Substring(0, 4));
-            int month = Int32.Parse(date.Substring(5, 2));
-            int day = Int32.Parse(date.Substring(8, 2));
-            DateTime myDate = new DateTime(year, month, day);
+        {
+            DateTime myDate = GetDate(date);
             return myDate.ToShortDateString();
         }
 
         public static bool DayFirst(string day, string night)
         {
-            DateTime testday = GetDate(day);
-            DateTime testnight = GetDate(night);
-            bool answer = (testday < testnight);
-            if (testday < testnight)
-            
-            {
+            DateTime testDay = GetDate(day);
+            DateTime testNight = GetDate(night);
 
+            if (testDay < testNight)
                 return true;
-            }
-            //if day < night return true
             return false;
         }
 
