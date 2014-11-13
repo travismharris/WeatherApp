@@ -11,7 +11,7 @@ namespace WeatherApp
 {
     class WeatherRequest
     {
-        string days, hours, zip, latitude, longitude;
+        string days, zip, latitude, longitude;
         RestClient coordinates;
         RestClient forecast;
 
@@ -27,15 +27,14 @@ namespace WeatherApp
                 "http://graphical.weather.gov/xml/sample_products/browser_interface/ndfdBrowserClientByDay.php");
         }
 
-        public string GetCoordinates()
+        public void GetCoordinates()
         {
             var coordRequest = new RestRequest("?listZipCodeList=" + zip, Method.GET);
-            var coordinatesResponse = this.coordinates.Execute(coordRequest);
+            var coordinatesResponse = coordinates.Execute(coordRequest);
             var xmlCoords = coordinatesResponse.Content.ToString();
             var coords = ParseCoordinates(xmlCoords);
-            latitude = GetLatitude(coords);
-            longitude = GetLongitude(coords);
-            return (latitude + " " + longitude);
+            SetLatitude(coords);
+            SetLongitude(coords);
         }
 
         public string ParseCoordinates(string coords)
@@ -47,23 +46,22 @@ namespace WeatherApp
             return coordElement.FirstOrDefault().ToString() ;
         }
 
-        public string GetLatitude(string coords)
+        public void SetLatitude(string coords)
         {
             string result = "lat=";
             result += coords.Substring(0, coords.IndexOf(',', 0));
-            return result;
+            latitude = result;
         }
 
-        public string GetLongitude(string coords)
+        public void SetLongitude(string coords)
         {
             string result = "lon=";
             result += coords.Substring((coords.IndexOf(',', 0) + 1), (coords.Length - (coords.IndexOf(',', 0) + 1)));
-            return result;
+            longitude = result;
         }
 
         public string GetForecast()
         {
-            //expand to have 12hourly?
             var forecastRequest = new RestRequest("?" + latitude + "&" + longitude + "&format=12+hourly&numDays="+ days);
             var forecastResponse = forecast.Execute(forecastRequest);
             List<WeatherObject> wOResponse = ParseXml(forecastResponse.Content.ToString());
@@ -112,7 +110,6 @@ namespace WeatherApp
 
         public List<WeatherObject> ParseXml(string rawXml)
         {
-            //StringBuilder sb = new StringBuilder();
             XElement toParse = XElement.Parse(rawXml);
 
             var dateElements = toParse.Descendants("time-layout")
@@ -146,24 +143,53 @@ namespace WeatherApp
 
         }
 
+        public XElement GetDatesforDay24HourLayout(XElement toParse)
+        {
+            return toParse.Descendants("time-layout")
+                .FirstOrDefault(x => x.Element("layout-key").Value == "k-p24h-n" + days + "-1");
+        }
+
+        public XElement GetDatesforNight24HourLayout(XElement toParse)
+        {
+            return toParse.Descendants("time-layout")
+                .FirstOrDefault(x => x.Element("layout-key").Value == "k-p24h-n" + days + "-2");
+        }
+
+        public IEnumerable<XAttribute> GetPeriodName(XElement dateLayout)
+        {
+            return from x in dateLayout.Elements("start-valid-time")
+                   select x.Attribute("period-name");
+        }
+
         public List<WeatherObject> ParseXml12Hour(string rawXml)
         {
+            //break out all the calls in this method
             XElement toParse = XElement.Parse(rawXml);
 
-            var dateLayout24_1 = toParse.Descendants("time-layout")
-                .FirstOrDefault(x => x.Element("layout-key").Value == "k-p24h-n" + days + "-1");
+            var dateLayout24_1 = GetDatesforDay24HourLayout(toParse);
 
-            var dates24_1 = from x in dateLayout24_1.Elements("start-valid-time")
-                            select x.Attribute("period-name");
+            var dates24_1 = GetPeriodName(dateLayout24_1);
+
+            //var dateLayout24_1 = toParse.Descendants("time-layout")
+            //    .FirstOrDefault(x => x.Element("layout-key").Value == "k-p24h-n" + days + "-1");
+
+            //var dates24_1 = from x in dateLayout24_1.Elements("start-valid-time")
+            //                select x.Attribute("period-name");
+
+            //can reuse all calls for daytime parsing with nighttime calls!
 
             var dayTime = dateLayout24_1.Elements("start-valid-time")
                 .FirstOrDefault().Value;
             
-            var dateLayout24_2 = toParse.Descendants("time-layout")
-                .FirstOrDefault(x => x.Element("layout-key").Value == "k-p24h-n" + days + "-2");
+            //var dateLayout24_2 = toParse.Descendants("time-layout")
+            //    .FirstOrDefault(x => x.Element("layout-key").Value == "k-p24h-n" + days + "-2");
 
-            var dates24_2  = from x in dateLayout24_2.Elements("start-valid-time")
-                             select x.Attribute("period-name");
+            var dateLayout24_2 = GetDatesforNight24HourLayout(toParse);
+
+            var dates24_2 = GetPeriodName(dateLayout24_2);
+
+            //var dates24_2  = from x in dateLayout24_2.Elements("start-valid-time")
+            //                 select x.Attribute("period-name");
 
             var nightTime = dateLayout24_2.Elements("start-valid-time")
                 .FirstOrDefault().Value;
