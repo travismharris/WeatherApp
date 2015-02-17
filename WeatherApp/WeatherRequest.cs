@@ -11,59 +11,27 @@ namespace WeatherApp
 {
     class WeatherRequest
     {
-        string days, zip, latitude, longitude;
-        RestClient coordinates;
+        string days, coordinates; //, zip, latitude, longitude;
+        //RestClient coordinates;
         RestClient forecast;
         XElement toParse;
 
-        public WeatherRequest() : this("3", "22901") { }
+        public WeatherRequest() : this("3", "22901" ) { }
 
         public WeatherRequest(string days, string zip)
         {
             this.days = days;
-            this.zip = zip;
-            coordinates = new RestClient(
-                "http://graphical.weather.gov/xml/sample_products/browser_interface/ndfdXMLclient.php");
+            //this.zip = zip;
+            var getCoordinates = new CoordinateRequest(zip);
+            //getCoordinates.GetCoordinates();
+            coordinates = getCoordinates.coordinateValues;
             forecast = new RestClient(
                 "http://graphical.weather.gov/xml/sample_products/browser_interface/ndfdBrowserClientByDay.php");
         }
 
-        public void GetCoordinates()
-        {
-            var coordRequest = new RestRequest("?listZipCodeList=" + zip, Method.GET);
-            var coordinatesResponse = coordinates.Execute(coordRequest);
-            var xmlCoords = coordinatesResponse.Content.ToString();
-            var coords = ParseCoordinates(xmlCoords);
-            SetLatitude(coords);
-            SetLongitude(coords);
-        }
-
-        public string ParseCoordinates(string coords)
-        {
-            XElement coordinates = XElement.Parse(coords);
-            var coordElement = from c in coordinates.Elements("latLonList")
-                               select c.Value;
-
-            return coordElement.FirstOrDefault().ToString() ;
-        }
-
-        public void SetLatitude(string coords)
-        {
-            string result = "lat=";
-            result += coords.Substring(0, coords.IndexOf(',', 0));
-            latitude = result;
-        }
-
-        public void SetLongitude(string coords)
-        {
-            string result = "lon=";
-            result += coords.Substring((coords.IndexOf(',', 0) + 1), (coords.Length - (coords.IndexOf(',', 0) + 1)));
-            longitude = result;
-        }
-
         public string GetForecast()
         {
-            var forecastRequest = new RestRequest("?" + latitude + "&" + longitude + "&format=12+hourly&numDays="+ days);
+            var forecastRequest = new RestRequest("?" + coordinates + "&format=12+hourly&numDays="+ days);
             var forecastResponse = forecast.Execute(forecastRequest);
             toParse = XElement.Parse(forecastResponse.Content.ToString());
             List<WeatherObject> wOResponse = ParseXml(toParse);
@@ -72,7 +40,7 @@ namespace WeatherApp
 
         public string GetForecast12Hour()
         {
-            var forecastRequest = new RestRequest("?" + latitude + "&" + longitude + "&format=12+hourly&numDays=" + days);
+            var forecastRequest = new RestRequest("?" + coordinates + "&format=12+hourly&numDays=" + days);
             var forecastResponse = forecast.Execute(forecastRequest);
             toParse = XElement.Parse(forecastResponse.Content.ToString());
             List<WeatherObject> wOResponse = ParseXml12Hour(toParse);

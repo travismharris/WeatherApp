@@ -1,0 +1,7 @@
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTests\bin\Debug\WeatherAppTests.dll
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTests\bin\Debug\WeatherAppTests.pdb
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTests\bin\Debug\xunit.dll
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTests\bin\Debug\xunit.xml
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTests\obj\Debug\WeatherAppTests.csprojResolveAssemblyReference.cache
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTests\obj\Debug\WeatherAppTests.dll
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTests\obj\Debug\WeatherAppTests.pdb

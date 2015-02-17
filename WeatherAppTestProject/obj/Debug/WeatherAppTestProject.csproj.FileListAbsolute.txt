@@ -1,0 +1,14 @@
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\bin\Debug\WeatherAppTestProject.dll
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\bin\Debug\WeatherAppTestProject.pdb
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\bin\Debug\xunit.dll
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\bin\Debug\xunit.xml
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\obj\Debug\WeatherAppTestProject.dll
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\obj\Debug\WeatherAppTestProject.pdb
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\bin\Debug\xunit.runner.visualstudio.testadapter.dll
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\bin\Debug\xunit.runner.utility.desktop.dll
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\bin\Debug\xunit.abstractions.dll
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\obj\Debug\WeatherAppTestProject.csprojResolveAssemblyReference.cache
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\bin\Debug\WeatherApp.exe
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\bin\Debug\RestSharp.dll
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\bin\Debug\WeatherApp.pdb
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherAppTestProject\bin\Debug\RestSharp.xml

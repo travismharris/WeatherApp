@@ -54,14 +54,26 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="WeatherApp.exe" size="19968">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="WeatherApp.exe" size="20880">
       <assemblyIdentity name="WeatherApp" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>nK4rqXWam7FbrENNJyqX2ZaUSxzyFbaFPYtTcW4nod8=</dsig:DigestValue>
+        <dsig:DigestValue>brTJq45cNuiWU8zuo8Ir1YblDHH0BTnlhk/LU1eI7xE=</dsig:DigestValue>
+      </hash>
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="xunit.dll" size="69632">
+      <assemblyIdentity name="xunit" version="1.9.2.1705" publicKeyToken="8D05B1BB7A6FDB6C" language="neutral" processorArchitecture="msil" />
+      <hash>
+        <dsig:Transforms>
+          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+        </dsig:Transforms>
+        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+        <dsig:DigestValue>oEd/v8twuC9yl76HuuUWTboIK2/gxNg+aaX+uxHsACA=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

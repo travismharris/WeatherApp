@@ -28,3 +28,5 @@ C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherApp\obj\Debug\WeatherApp.Prop
 C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherApp\obj\Debug\WeatherApp.csproj.GenerateResource.Cache
 C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherApp\obj\Debug\WeatherApp.exe.manifest
 C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherApp\obj\Debug\WeatherApp.application
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherApp\bin\Debug\xunit.dll
+C:\Users\Travis\Documents\GitHub\WeatherApp\WeatherApp\bin\Debug\xunit.xml

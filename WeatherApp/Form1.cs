@@ -27,7 +27,6 @@ namespace WeatherApp
             else zip = txtZip.Text;
 
             var getWeather = new WeatherRequest(days, zip);
-            getWeather.GetCoordinates();
             webBrowser1.DocumentText = getWeather.GetForecast();
         }
 
@@ -41,7 +40,6 @@ namespace WeatherApp
             else zip = txtZip.Text;
 
             var getWeather = new WeatherRequest(days, zip);
-            getWeather.GetCoordinates();
             webBrowser1.DocumentText = getWeather.GetForecast12Hour();
 
         }
