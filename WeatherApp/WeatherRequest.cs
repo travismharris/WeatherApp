@@ -11,8 +11,7 @@ namespace WeatherApp
 {
     class WeatherRequest
     {
-        string days, coordinates; //, zip, latitude, longitude;
-        //RestClient coordinates;
+        string days, coordinates; 
         RestClient forecast;
         XElement toParse;
 
@@ -21,9 +20,7 @@ namespace WeatherApp
         public WeatherRequest(string days, string zip)
         {
             this.days = days;
-            //this.zip = zip;
             var getCoordinates = new CoordinateRequest(zip);
-            //getCoordinates.GetCoordinates();
             coordinates = getCoordinates.coordinateValues;
             forecast = new RestClient(
                 "http://graphical.weather.gov/xml/sample_products/browser_interface/ndfdBrowserClientByDay.php");
@@ -31,11 +28,11 @@ namespace WeatherApp
 
         public string GetForecast()
         {
-            var forecastRequest = new RestRequest("?" + coordinates + "&format=12+hourly&numDays="+ days);
+            var forecastRequest = new RestRequest("?" + coordinates + "&format=24+hourly&numDays="+ days);
             var forecastResponse = forecast.Execute(forecastRequest);
             toParse = XElement.Parse(forecastResponse.Content.ToString());
             List<WeatherObject> wOResponse = ParseXml(toParse);
-            return FormatResponse(wOResponse);
+            return FormatResponse(wOResponse, 24);
         }
 
         public string GetForecast12Hour()
@@ -44,31 +41,19 @@ namespace WeatherApp
             var forecastResponse = forecast.Execute(forecastRequest);
             toParse = XElement.Parse(forecastResponse.Content.ToString());
             List<WeatherObject> wOResponse = ParseXml12Hour(toParse);
-            return Format12HourResponse(wOResponse);
+            return FormatResponse(wOResponse, 12);
         }
 
-        public string FormatResponse(List<WeatherObject> wo)
+        public string FormatResponse(List<WeatherObject> wo, int hours)
         {
             StringBuilder sb = new StringBuilder("<html><table cellspacing=10>");
             for (int i = 0; i < wo.Count(); i++)
             {
-                sb.Append("<tr><td valign=\"top\">" + GetFormattedDate(wo[i].date) + "</td>");
-                sb.Append("<td>Minimum: " + wo[i].min + "<br />");
-                sb.Append("Maximum: " + wo[i].max + "<br />");
-                sb.Append("Conditions: " + wo[i].conditions + "</td>");
-                sb.Append("<td><img src=\"" + wo[i].iconPath + "\"\\></td></tr>");
-            }
-            sb.Append("</table></html>");
-
-            return sb.ToString();
-        }
-
-        public string Format12HourResponse(List<WeatherObject> wo)
-        {
-            StringBuilder sb = new StringBuilder("<html><table cellspacing=10>");
-            for (int i = 0; i < wo.Count(); i++)
-            {
-                sb.Append("<tr><td valign=\"top\">" + wo[i].date.Substring(13,wo[i].date.Length-14) + "</td>");
+                sb.Append("<tr><td valign=\"top\">");
+                if (hours == 24 )    
+                    sb.Append(GetFormattedDate(wo[i].date) + "</td>");
+                else if (hours == 12)
+                    sb.Append(wo[i].date.Substring(13,wo[i].date.Length-14) + "</td>");
                 sb.Append("<td>Minimum: " + wo[i].min + "<br />");
                 sb.Append("Maximum: " + wo[i].max + "<br />");
                 sb.Append("Conditions: " + wo[i].conditions + "</td>");
@@ -83,7 +68,6 @@ namespace WeatherApp
         {
             var dateElements = GetDatesforDay24HourLayout(toParse);
             var dates = GetPeriods(dateElements);
-
             var descriptions = GetDescriptions(toParse);
             var minimums = GetMinimums(toParse);
             var maximums = GetMaximums(toParse);
@@ -98,10 +82,106 @@ namespace WeatherApp
             }
 
             return wo.ToList();
-
         }
 
+        public List<WeatherObject> ParseXml12Hour(XElement toParse)
+        {
+            var dateLayout24_Day = GetDatesforDay24HourLayout(toParse);
+            var dayNames = GetPeriodNames(dateLayout24_Day);
+            var dayTime = GetStringValueOfDateTime(dateLayout24_Day);
 
+            var dateLayout24_Night = GetDatesforNight24HourLayout(toParse);
+            var nightNames = GetPeriodNames(dateLayout24_Night);
+            var nightTime = GetStringValueOfDateTime(dateLayout24_Night);
+
+            bool dayFirst = DayFirst(dayTime, nightTime);
+
+            var dateLayout12 = Get12HourPeriodsLayout(toParse);
+            var periods_12Hour = GetPeriods(dateLayout12);
+
+            var descriptions = GetDescriptions(toParse);
+            var minimums = GetMinimums(toParse);
+            var maximums = GetMaximums(toParse);
+            var icons = GetIcons(toParse);
+
+            //if day first call assembler one way else -- another
+            // or maybe a linq statement?
+
+            List<WeatherObject> wo = new List<WeatherObject>();
+            if (dayFirst)
+            {
+                for (int i = 0; i < periods_12Hour.Count(); i++)
+                {
+                    WeatherObject tempWO = new WeatherObject();
+                    if (i % 2 == 0)
+                    {
+                        if (i == 0)
+                        {
+                            tempWO.date = dayNames.ElementAt(i).ToString();
+                            tempWO.max = maximums.ElementAt(i);
+                        }
+                        if (i > 0)
+                        {
+                            tempWO.date = dayNames.ElementAt(i - (i / 2)).ToString();
+                            tempWO.max = maximums.ElementAt(i - (i / 2));
+                        }
+                    }
+                    if (i % 2 != 0)
+                    {
+                        if (i == 1)
+                        {
+                            tempWO.date = nightNames.ElementAt(i - 1).ToString();
+                            tempWO.min = minimums.ElementAt(i - 1);
+                        }
+                        if (i > 1)
+                        {
+                            tempWO.date = nightNames.ElementAt(i - ((i / 2) + 1)).ToString();
+                            tempWO.min = minimums.ElementAt(i - ((i / 2) + 1));
+                        }
+                    }
+                    tempWO.conditions = descriptions.ElementAt(i);
+                    tempWO.iconPath = icons.ElementAt(i).ToString();
+                    wo.Add(tempWO);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < periods_12Hour.Count(); i++)
+                {
+                    WeatherObject tempWO = new WeatherObject();
+                    if (i % 2 == 0)
+                    {
+                        if (i == 0)
+                        {
+                            tempWO.date = nightNames.ElementAt(i).ToString();
+                            tempWO.min = minimums.ElementAt(i);
+                        }
+                        if (i > 0)
+                        {
+                            tempWO.date = nightNames.ElementAt(i - (i / 2)).ToString();
+                            tempWO.min = minimums.ElementAt(i - (i / 2));
+                        }
+                    }
+                    if (i % 2 != 0)
+                    {
+                        if (i == 1)
+                        {
+                            tempWO.date = dayNames.ElementAt(i - 1).ToString();
+                            tempWO.max = maximums.ElementAt(i - 1);
+                        }
+                        if (i > 1)
+                        {
+                            tempWO.date = dayNames.ElementAt(i - ((i / 2) + 1)).ToString();
+                            tempWO.max = maximums.ElementAt(i - ((i / 2) + 1));
+                        }
+                    }
+                    tempWO.conditions = descriptions.ElementAt(i);
+                    tempWO.iconPath = icons.ElementAt(i).ToString();
+                    wo.Add(tempWO);
+                }
+            }
+            return wo;
+        }
 
         public XElement GetDatesforDay24HourLayout(XElement toParse)
         {
@@ -163,107 +243,6 @@ namespace WeatherApp
         {
             return from x in toParse.Descendants("conditions-icon").Elements("icon-link")
                    select x.Value;
-        }
-
-
-
-        public List<WeatherObject> ParseXml12Hour(XElement toParse)
-        {
-            var dateLayout24_Day = GetDatesforDay24HourLayout(toParse);
-            var dayNames = GetPeriodNames(dateLayout24_Day);
-            var dayTime = GetStringValueOfDateTime(dateLayout24_Day);
-
-            var dateLayout24_Night = GetDatesforNight24HourLayout(toParse);
-            var nightNames = GetPeriodNames(dateLayout24_Night);
-            var nightTime = GetStringValueOfDateTime(dateLayout24_Night);
-
-            bool dayFirst = DayFirst(dayTime, nightTime);
-
-            var dateLayout12 = Get12HourPeriodsLayout(toParse);
-            var periods_12Hour = GetPeriods(dateLayout12);
-
-            var descriptions = GetDescriptions(toParse);
-            var minimums = GetMinimums(toParse);
-            var maximums = GetMaximums(toParse);
-            var icons = GetIcons(toParse);
-
-            //if day first call assembler one way else -- another
-            // or maybe a linq statement?
-
-            List<WeatherObject> wo = new List<WeatherObject>();
-            if (dayFirst)
-            {                    
-                for (int i = 0; i < periods_12Hour.Count(); i++)
-                {
-                    WeatherObject tempWO = new WeatherObject();
-                    if (i % 2 == 0)
-                    {
-                        if (i == 0)
-                        {
-                            tempWO.date=dayNames.ElementAt(i).ToString();
-                            tempWO.max= maximums.ElementAt(i);
-                        }
-                        if (i > 0)
-                        {
-                            tempWO.date=dayNames.ElementAt(i - (i / 2)).ToString();
-                            tempWO.max= maximums.ElementAt(i - (i / 2));
-                        }
-                    }
-                    if (i % 2 != 0)
-                    {
-                        if (i == 1)
-                        {
-                            tempWO.date=nightNames.ElementAt(i - 1).ToString();
-                            tempWO.min= minimums.ElementAt(i - 1);
-                        }
-                        if (i > 1)
-                        {
-                            tempWO.date=nightNames.ElementAt(i - ((i / 2) + 1)).ToString();
-                            tempWO.min= minimums.ElementAt(i - ((i / 2) + 1));
-                        }
-                    }
-                    tempWO.conditions=descriptions.ElementAt(i);
-                    tempWO.iconPath=icons.ElementAt(i).ToString();
-                    wo.Add(tempWO);
-                }
-            }
-            else
-            {
-                for (int i = 0; i < periods_12Hour.Count(); i++)
-                {
-                    WeatherObject tempWO = new WeatherObject();
-                    if(i%2==0)
-                    {
-                        if (i == 0)
-                        {
-                            tempWO.date=nightNames.ElementAt(i).ToString();
-                            tempWO.min= minimums.ElementAt(i);
-                        }
-                        if (i > 0)
-                        {
-                            tempWO.date=nightNames.ElementAt(i - (i / 2) ).ToString();
-                            tempWO.min= minimums.ElementAt(i - (i / 2) );
-                        }
-                    }
-                    if(i%2!=0)
-                    {
-                        if (i == 1)
-                        {
-                            tempWO.date=dayNames.ElementAt(i-1).ToString();
-                            tempWO.max = maximums.ElementAt(i - 1);
-                        }
-                        if (i > 1)
-                        {
-                            tempWO.date=dayNames.ElementAt(i - ((i / 2)+1)).ToString();
-                            tempWO.max= maximums.ElementAt(i - ((i / 2)+1));
-                        }
-                    }
-                    tempWO.conditions=descriptions.ElementAt(i);
-                    tempWO.iconPath=icons.ElementAt(i).ToString();
-                    wo.Add(tempWO);
-                }
-            }
-            return wo;
         }
 
         public string GetFormattedDate(string date)

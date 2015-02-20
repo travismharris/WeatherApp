@@ -34,10 +34,12 @@ namespace WeatherApp
         public string ParseCoordinates(string coords)
         {
             XElement coordinates = XElement.Parse(coords);
+            if (coords.Contains(" is not a valid US zip code"))
+                throw new ArgumentException("You did not provide a valid US zip code");
             var coordElement = from c in coordinates.Elements("latLonList")
                                select c.Value;
-
             return coordElement.FirstOrDefault().ToString();
+
         }
 
         public string GetLatitude(string coords)
